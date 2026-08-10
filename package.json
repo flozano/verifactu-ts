@@ -1,0 +1,45 @@
+{
+  "name": "verifactu-ts",
+  "version": "0.1.0",
+  "description": "Huella (hash) y encadenamiento de registros VeriFactu (AEAT) para TypeScript y Node. Sin dependencias.",
+  "keywords": [
+    "verifactu",
+    "veri-factu",
+    "aeat",
+    "facturacion",
+    "hash",
+    "huella",
+    "españa",
+    "rd-1007-2023",
+    "antifraude",
+    "invoicing"
+  ],
+  "license": "MIT",
+  "author": "Juan Archidona",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "tsc -p tsconfig.json && node --test dist-test/test/*.test.js",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
