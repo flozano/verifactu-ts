@@ -16,6 +16,14 @@
   ],
   "license": "MIT",
   "author": "Juan Archidona",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JuanArchidona/verifactu-ts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JuanArchidona/verifactu-ts/issues"
+  },
+  "homepage": "https://github.com/JuanArchidona/verifactu-ts#readme",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
