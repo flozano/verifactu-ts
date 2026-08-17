@@ -111,3 +111,40 @@ export {
   xmlRegistroAlta,
   xmlRegistroAnulacion,
 } from './xml.js';
+
+export type {
+  EstadoEnvio,
+  EstadoRegistro,
+  EstadoRegistroDuplicado,
+  RegistroDuplicado,
+  RespuestaEnvio,
+  RespuestaLinea,
+} from './respuesta.js';
+
+export {
+  ErrorSoapAeat,
+  lineasPorSubsanar,
+  lineasRechazadas,
+  parsearRespuestaEnvio,
+} from './respuesta.js';
+
+export type {
+  CertificadoCliente,
+  EntornoEnvio,
+  ModalidadEnvio,
+  OpcionesCliente,
+  PeticionTransporte,
+  RespuestaTransporte,
+  Transporte,
+} from './envio.js';
+
+export {
+  ClienteAeat,
+  ENDPOINTS,
+  ErrorEnvioAeat,
+  ESPERA_INICIAL_SEGUNDOS,
+  MAX_REGISTROS_POR_ENVIO,
+  NS_SOAP,
+  endpointAeat,
+  sobreSoap,
+} from './envio.js';

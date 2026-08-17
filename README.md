@@ -4,10 +4,10 @@ Huella (hash), encadenamiento, **código QR**, **XML del registro** y **validaci
 con los códigos de error oficiales** de **VeriFactu**, para TypeScript y Node. Sin
 dependencias. Verificado contra los vectores de ejemplo y los esquemas oficiales de la AEAT.
 
-> **Estado: v0.3** — cubre el registro de facturación completo: se calcula la huella, se
-> genera el XML que espera el servicio de remisión y se comprueba **antes de enviarlo**
-> qué rechazaría la AEAT y con qué código. El cliente de envío es el siguiente paso
-> (ver la hoja de ruta).
+> **Estado: v0.4** — el ciclo completo: se calcula la huella, se genera el XML, se
+> comprueba **antes de enviarlo** qué rechazaría la AEAT y con qué código, se envía al
+> servicio de remisión y se interpreta su respuesta. Incluye el mecanismo de control de
+> flujo que la Orden HAC/1177/2024 hace obligatorio.
 
 ## Por qué existe
 
@@ -214,6 +214,62 @@ construido el objeto. Lo mismo vale para el espacio de nombres de cada elemento:
 `Cabecera` pertenece a `SuministroLR` y sus hijos a `SuministroInformacion`, y equivocar
 el prefijo tumba el envío entero.
 
+### Enviar los registros a la AEAT
+
+```ts
+import { ClienteAeat } from 'verifactu-ts';
+import { readFileSync } from 'node:fs';
+
+const cliente = new ClienteAeat({
+  entorno: 'pruebas',                       // por defecto, para no publicar sin querer
+  certificado: { pfx: readFileSync('certificado.p12'), passphrase: '…' },
+});
+
+const respuesta = await cliente.enviar(cabecera, [{ alta: registro }]);
+
+respuesta.EstadoEnvio;   // 'Correcto' | 'ParcialmenteCorrecto' | 'Incorrecto'
+respuesta.CSV;           // guárdalo: no se puede recuperar después
+```
+
+Cada línea de la respuesta llega ya interpretada, con su código cruzado contra el
+catálogo oficial:
+
+```ts
+import { lineasRechazadas, lineasPorSubsanar } from 'verifactu-ts';
+
+lineasRechazadas(respuesta);    // no quedaron anotadas: hay que corregirlas y reenviarlas
+lineasPorSubsanar(respuesta);   // anotadas, pero con errores admisibles que subsanar
+```
+
+Un detalle que cuesta caro descubrir tarde: **el CSV sólo se entrega en el momento del
+alta y la AEAT no lo devuelve en consultas posteriores**. Si no se almacena, se pierde la
+constancia de la remisión.
+
+**Control de flujo.** El artículo 16.2 de la Orden HAC/1177/2024 obliga a los sistemas
+VERI*FACTU a esperar entre envíos los segundos que indique la última respuesta —60 al
+principio—, o hasta acumular el máximo de registros. El cliente lo lleva solo: reutiliza
+la misma instancia y `enviar` esperará lo que haga falta.
+
+```ts
+cliente.tiempoEsperaSegundos;   // el que fijó la última respuesta
+cliente.esperaPendienteMs();    // lo que falta para poder enviar de nuevo
+
+// Para listas largas: trocea en lotes de 1000 como máximo y respeta la espera.
+await cliente.enviarPorLotes(cabecera, registros);
+```
+
+Los errores llegan tipados y con su significado: `ErrorSoapAeat` cuando la AEAT rechaza
+el envío completo con un `SOAPFault` —con el código extraído del `faultstring` y un
+campo `reintentable` que distingue el fallo del servidor del mensaje mal construido— y
+`ErrorEnvioAeat` para los problemas de transporte.
+
+Si necesitas otro transporte (un proxy corporativo, trazas, o pruebas sin red), se puede
+sustituir sin tocar el resto:
+
+```ts
+new ClienteAeat({ transporte: async ({ url, cuerpo, cabeceras }) => ({ estado: 200, cuerpo: '…' }) });
+```
+
 ### Depurar una huella que no cuadra
 
 Cuando la AEAT rechaza un registro, el problema casi nunca está en el SHA-256: está en
@@ -248,6 +304,13 @@ console.log(cadenaHuellaAlta(campos));
 | `xmlRegistroAnulacion(registro, opciones?)` | XML del registro de anulación |
 | `xmlRegFactuSistemaFacturacion(cabecera, registros, opciones?)` | Mensaje de remisión completo |
 | `errorAeat(codigo)` / `ERRORES_AEAT` | Catálogo oficial de los 247 códigos de error |
+| `new ClienteAeat(opciones)` | Cliente del servicio de remisión, con control de flujo |
+| `cliente.enviar(cabecera, registros)` | Envía un lote y devuelve la respuesta interpretada |
+| `cliente.enviarPorLotes(cabecera, registros, tamano?)` | Trocea una lista larga y la envía respetando la espera |
+| `parsearRespuestaEnvio(xml)` | Interpreta una respuesta o `SOAPFault` recibido por otra vía |
+| `lineasRechazadas(r)` / `lineasPorSubsanar(r)` | Filtra los registros no anotados y los que hay que subsanar |
+| `endpointAeat(opciones)` / `ENDPOINTS` | Puntos de entrada publicados en el WSDL |
+| `sobreSoap(xml)` | Envuelve el mensaje en un sobre SOAP 1.1 |
 
 Todos los tipos (`CamposHuellaAlta`, `CamposHuellaAnulacion`, `CamposHuellaEvento`,
 `RegistroEncadenado`, `ProblemaCadena`, `DatosQrFactura`, `ProblemaQr`, `RegistroAlta`,
@@ -270,6 +333,9 @@ la Orden HAC/1177/2024:
   apartado 4.4.
 - *"Diseños de registro de facturación"* y los esquemas `SuministroLR.xsd` /
   `SuministroInformacion.xsd`, **versión 1.0 (28/10/2024)**.
+- *"Sistemas Informáticos de Facturación. Remisión voluntaria y remisión bajo
+  requerimiento de la AEAT"*, **versión 1.0.3 (28/07/2025)**, y el WSDL
+  `SistemaFacturacion.wsdl` del que salen los puntos de entrada.
 
 La suite de tests incluye **los vectores de ejemplo oficiales**: los tres casos de huella
 del apartado 6 del primer documento con sus hashes, y las cuatro URL del apartado 8 del
@@ -284,12 +350,20 @@ Nada se da por bueno porque lo diga este paquete:
 - El XML generado se valida **contra los XSD que publica la propia AEAT**, con un
   validador externo y sobre muestras que ejercitan todos los bloques opcionales del
   esquema (rectificativas, terceros, destinatarios extranjeros, exenciones, recargo de
-  equivalencia, encadenamiento, lotes mixtos y remisión bajo requerimiento).
+  equivalencia, encadenamiento, lotes mixtos y remisión bajo requerimiento). Una de las
+  muestras es el sobre SOAP completo, para comprobar que envolverlo no altera el mensaje
+  que ve la AEAT.
 
 ```bash
-npm test              # 96 tests, sin dependencias externas
+npm test              # 118 tests, sin dependencias externas
 npm run validar:xsd   # además, valida el XML contra los esquemas oficiales (requiere Python y lxml)
 ```
+
+Lo que **no** está cubierto por tests automáticos es la conexión real con la AEAT: exige
+un certificado electrónico cualificado y un obligado tributario dado de alta. El cliente
+se prueba con un transporte simulado, así que el sobre, las cabeceras, el troceado en
+lotes, el control de flujo y la lectura de la respuesta sí están verificados de extremo a
+extremo; el apretón de manos TLS con el servicio, no.
 
 ## Hoja de ruta
 
@@ -298,7 +372,8 @@ npm run validar:xsd   # además, valida el XML contra los esquemas oficiales (re
 - [x] Código QR de cotejo (URL de validación AEAT) y validación de sus datos
 - [x] Generación del XML del registro, validado contra los XSD oficiales
 - [x] Validación previa del registro con el catálogo de errores de la AEAT
-- [ ] Cliente de envío a los entornos de la AEAT (pruebas y producción)
+- [x] Cliente de envío a los entornos de la AEAT, con control de flujo
+- [ ] Consulta de registros presentados (`ConsultaFactuSistemaFacturacion`)
 - [ ] Registro de evento (`RegistroEvento`) y su XML
 - [ ] Estados de factura del RD 238/2026 (factura electrónica B2B)
 

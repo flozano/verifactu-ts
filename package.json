@@ -1,7 +1,7 @@
 {
   "name": "verifactu-ts",
-  "version": "0.3.0",
-  "description": "VeriFactu (AEAT) para TypeScript y Node: huella, encadenamiento, código QR, XML del registro de facturación y validación previa con los códigos de error oficiales. Sin dependencias.",
+  "version": "0.4.0",
+  "description": "VeriFactu (AEAT) para TypeScript y Node: huella, encadenamiento, código QR, XML del registro, validación previa con los códigos de error oficiales y envío al servicio de la AEAT. Sin dependencias.",
   "keywords": [
     "verifactu",
     "veri-factu",
@@ -12,6 +12,8 @@
     "qr",
     "xml",
     "validacion",
+    "soap",
+    "api",
     "españa",
     "rd-1007-2023",
     "antifraude",

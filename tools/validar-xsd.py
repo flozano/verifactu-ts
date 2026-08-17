@@ -79,9 +79,23 @@ def main() -> int:
         )
 
     print(f"\nValidando {len(muestras)} muestras contra SuministroLR.xsd:\n")
+    NS_SOAP = "http://schemas.xmlsoap.org/soap/envelope/"
     fallos = 0
     for muestra in muestras:
         documento = etree.parse(str(muestra))
+
+        # Si la muestra es un sobre SOAP, se valida el mensaje que lleva dentro.
+        raiz = documento.getroot()
+        if raiz.tag == f"{{{NS_SOAP}}}Envelope":
+            cuerpo = raiz.find(f"{{{NS_SOAP}}}Body")
+            hijos = list(cuerpo) if cuerpo is not None else []
+            if len(hijos) != 1:
+                fallos += 1
+                print(f"  FALLA {muestra.name}")
+                print(f"          el Body del sobre SOAP debe tener un único hijo, tiene {len(hijos)}")
+                continue
+            documento = etree.ElementTree(hijos[0])
+
         if esquema.validate(documento):
             print(f"  OK    {muestra.name}")
         else:

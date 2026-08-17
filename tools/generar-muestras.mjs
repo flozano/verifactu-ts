@@ -13,6 +13,7 @@ const raiz = dirname(dirname(fileURLToPath(import.meta.url)));
 const { xmlRegFactuSistemaFacturacion } = await import(
   pathToFileURL(join(raiz, 'dist-test', 'src', 'xml.js')).href
 );
+const { sobreSoap } = await import(pathToFileURL(join(raiz, 'dist-test', 'src', 'envio.js')).href);
 
 const SISTEMA = {
   NombreRazon: 'PRODUCTORA DE SOFTWARE SL',
@@ -165,6 +166,9 @@ const muestras = {
     [{ alta: ALTA_MINIMA }],
   ),
   'sin-sangria.xml': xmlRegFactuSistemaFacturacion(CABECERA, [{ alta: ALTA_MINIMA }], { sangria: '' }),
+  // El validador extrae el cuerpo del sobre: comprueba que envolverlo en SOAP no
+  // altera el mensaje que ve la AEAT.
+  'sobre-soap.xml': sobreSoap(xmlRegFactuSistemaFacturacion(CABECERA, [{ alta: ALTA_COMPLETA }])),
 };
 
 const destino = join(raiz, 'tools', 'muestras');
