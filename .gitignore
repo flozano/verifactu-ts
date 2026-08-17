@@ -4,3 +4,8 @@ dist-test/
 *.tsbuildinfo
 .env
 .DS_Store
+
+# Artefactos de la verificación contra los esquemas oficiales:
+# los XSD se descargan de la AEAT y las muestras se generan con el propio SDK.
+tools/xsd/
+tools/muestras/

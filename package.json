@@ -1,7 +1,7 @@
 {
   "name": "verifactu-ts",
-  "version": "0.2.0",
-  "description": "Huella (hash), encadenamiento y código QR de facturas VeriFactu (AEAT) para TypeScript y Node. Sin dependencias.",
+  "version": "0.3.0",
+  "description": "VeriFactu (AEAT) para TypeScript y Node: huella, encadenamiento, código QR, XML del registro de facturación y validación previa con los códigos de error oficiales. Sin dependencias.",
   "keywords": [
     "verifactu",
     "veri-factu",
@@ -10,6 +10,8 @@
     "hash",
     "huella",
     "qr",
+    "xml",
+    "validacion",
     "españa",
     "rd-1007-2023",
     "antifraude",
@@ -45,6 +47,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "tsc -p tsconfig.json && node --test dist-test/test/*.test.js",
+    "muestras": "node tools/generar-muestras.mjs",
+    "validar:xsd": "npm test && node tools/generar-muestras.mjs && python tools/validar-xsd.py",
     "prepublishOnly": "npm run build && npm test"
   },
   "devDependencies": {

@@ -60,3 +60,54 @@ export {
 export type { OpcionesSvgQr } from './qr.js';
 
 export { matrizQr, svgDesdeMatrizQr, svgQr } from './qr.js';
+
+export type {
+  Cabecera,
+  CalificacionOperacion,
+  ClaveRegimen,
+  DetalleDesglose,
+  Encadenamiento,
+  GeneradoPor,
+  IDFactura,
+  IDOtro,
+  IDType,
+  Impuesto,
+  ImporteRectificacion,
+  ObligadoEmision,
+  OperacionExenta,
+  PersonaFisicaJuridica,
+  RegistroAlta,
+  RegistroAnulacion,
+  RegistroAnterior,
+  RemisionRequerimiento,
+  RemisionVoluntaria,
+  SiNo,
+  SistemaInformatico,
+  TipoFactura,
+  TipoRectificativa,
+} from './registro.js';
+
+export {
+  CLAVES_REGIMEN_IGIC,
+  CLAVES_REGIMEN_IPSI,
+  CLAVES_REGIMEN_IVA,
+  TIPOS_FACTURA_RECTIFICATIVA,
+} from './registro.js';
+
+export type { CategoriaError, ErrorAeat } from './errores.js';
+
+export { ERRORES_AEAT, errorAeat, mensajeError } from './errores.js';
+
+export type { OpcionesValidacion, ProblemaRegistro, Severidad } from './validacion.js';
+
+export { validarRegistroAlta, validarRegistroAnulacion } from './validacion.js';
+
+export type { OpcionesXml, RegistroFactura } from './xml.js';
+
+export {
+  NS_SUMINISTRO_INFORMACION,
+  NS_SUMINISTRO_LR,
+  xmlRegFactuSistemaFacturacion,
+  xmlRegistroAlta,
+  xmlRegistroAnulacion,
+} from './xml.js';
