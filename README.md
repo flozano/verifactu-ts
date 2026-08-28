@@ -393,3 +393,21 @@ MIT © Juan Archidona
 Este proyecto es una utilidad técnica de código abierto. No es asesoramiento fiscal ni
 jurídico, y no sustituye a la verificación del cumplimiento normativo por parte del
 responsable del sistema informático de facturación.
+
+---
+
+## Sobre este fork
+
+El repositorio original —[JuanArchidona/verifactu-ts](https://github.com/JuanArchidona/verifactu-ts)—
+fue archivado por su autor el 21 de agosto de 2026 y es de sólo lectura. Este
+fork existe para poder seguir manteniéndolo: la obligación del RD 1007/2023
+entra en vigor el 1 de enero de 2027 para las sociedades, y los documentos de
+la AEAT sobre los que está construido —validaciones, huella, QR, servicio de
+remisión— siguen publicando versiones.
+
+El único cambio respecto al original es el guion `prepare`, que es el que npm y
+pnpm ejecutan al instalar una dependencia apuntada a un repositorio git. El
+paquete publicado en npm sólo lleva `dist`, así que sin él la instalación desde
+git deja el paquete sin construir.
+
+El mérito y la autoría son de Juan Archidona; la licencia sigue siendo MIT.

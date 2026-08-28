@@ -48,6 +48,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
     "test": "tsc -p tsconfig.json && node --test dist-test/test/*.test.js",
     "muestras": "node tools/generar-muestras.mjs",
     "validar:xsd": "npm test && node tools/generar-muestras.mjs && python tools/validar-xsd.py",
