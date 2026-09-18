@@ -229,7 +229,14 @@ const respuesta = await cliente.enviar(cabecera, [{ alta: registro }]);
 
 respuesta.EstadoEnvio;   // 'Correcto' | 'ParcialmenteCorrecto' | 'Incorrecto'
 respuesta.CSV;           // guárdalo: no se puede recuperar después
+respuesta.xml;           // lo que se recibió, tal cual
+respuesta.xmlEnviado;    // y lo que se envió: el sobre SOAP entero
 ```
+
+Las dos mitades van juntas a propósito. Quien conserva la respuesta como evidencia
+suele querer también la pregunta, y el sobre lo arma `enviar`, así que desde fuera no
+se puede reconstruir con garantías. Cuando el envío falla, `ErrorEnvioAeat` y
+`ErrorSoapAeat` también lo llevan.
 
 Cada línea de la respuesta llega ya interpretada, con su código cruzado contra el
 catálogo oficial:

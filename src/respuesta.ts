@@ -75,6 +75,14 @@ export interface RespuestaEnvio {
   lineas: RespuestaLinea[];
   /** XML recibido, por si hace falta conservarlo como evidencia. */
   xml: string;
+  /**
+   * XML que se envió, tal cual salió: el sobre SOAP entero.
+   *
+   * Lo rellena `ClienteAeat.enviar`, que es quien lo tiene; `parsearRespuestaEnvio`
+   * por sí sola no puede saberlo, y por eso es opcional. Quien conserve la
+   * respuesta como evidencia suele querer también la pregunta.
+   */
+  xmlEnviado?: string;
 }
 
 /**
@@ -97,8 +105,10 @@ export class ErrorSoapAeat extends Error {
    */
   readonly reintentable: boolean;
   readonly xml: string;
+  /** XML que se envió, cuando quien construye el error lo conoce. */
+  readonly xmlEnviado?: string;
 
-  constructor(faultcode: string, faultstring: string, xml: string) {
+  constructor(faultcode: string, faultstring: string, xml: string, xmlEnviado?: string) {
     const codigo = /Codigo\[(\d+)\]/.exec(faultstring)?.[1];
     const catalogado = codigo ? errorAeat(codigo) : undefined;
     super(
@@ -113,6 +123,7 @@ export class ErrorSoapAeat extends Error {
     this.error = catalogado;
     this.reintentable = /server/i.test(faultcode);
     this.xml = xml;
+    this.xmlEnviado = xmlEnviado;
   }
 }
 
@@ -151,7 +162,7 @@ function lineaDesde(nodo: NodoXml): RespuestaLinea {
  * @throws {ErrorSoapAeat} si la respuesta es un `SOAPFault`.
  * @throws {SyntaxError} si el XML está mal formado o no es una respuesta reconocible.
  */
-export function parsearRespuestaEnvio(xml: string): RespuestaEnvio {
+export function parsearRespuestaEnvio(xml: string, xmlEnviado?: string): RespuestaEnvio {
   const raiz = parsearXml(xml);
 
   const fault = buscar(raiz, 'Fault');
@@ -160,6 +171,7 @@ export function parsearRespuestaEnvio(xml: string): RespuestaEnvio {
       textoDeHijo(fault, 'faultcode') ?? '',
       textoDeHijo(fault, 'faultstring') ?? '',
       xml,
+      xmlEnviado,
     );
   }
 
@@ -182,6 +194,7 @@ export function parsearRespuestaEnvio(xml: string): RespuestaEnvio {
     TiempoEsperaEnvio: Number.isFinite(espera) && espera > 0 ? espera : 60,
     lineas: hijos(respuesta, 'RespuestaLinea').map(lineaDesde),
     xml,
+    ...(xmlEnviado === undefined ? {} : { xmlEnviado }),
   };
 }
 

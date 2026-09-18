@@ -320,6 +320,53 @@ test('el envío manda el sobre SOAP con las cabeceras que exige el servicio', as
   assert.ok(enviadas[0]!.cuerpo.includes('<sf:Huella>'));
 });
 
+test('la respuesta conserva el XML que se envió, no sólo el recibido', async () => {
+  const { transporte, enviadas } = transporteFalso([respuestaCorrecta()]);
+  const cliente = new ClienteAeat({ transporte, controlDeFlujo: false });
+
+  const respuesta = await cliente.enviar(CABECERA, [{ alta: ALTA }]);
+
+  // Byte a byte lo que salió: el sobre lo arma `enviar`, así que desde fuera no
+  // se puede reconstruir con garantías, y quien guarda la respuesta como
+  // evidencia suele querer también la pregunta.
+  assert.equal(respuesta.xmlEnviado, enviadas[0]!.cuerpo);
+  assert.ok(respuesta.xml.includes('RespuestaRegFactuSistemaFacturacion'));
+});
+
+test('un envío que falla también dice qué se envió', async () => {
+  const { transporte, enviadas } = transporteFalso([{ estado: 500, cuerpo: 'vaya' }]);
+  const cliente = new ClienteAeat({ transporte, controlDeFlujo: false });
+
+  await assert.rejects(
+    () => cliente.enviar(CABECERA, [{ alta: ALTA }]),
+    (e: unknown) => {
+      assert.ok(e instanceof ErrorEnvioAeat);
+      assert.equal(e.xmlEnviado, enviadas[0]!.cuerpo);
+      return true;
+    },
+  );
+});
+
+test('un SOAPFault llega con las dos mitades', async () => {
+  const fault =
+    '<?xml version="1.0"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">' +
+    '<soapenv:Body><soapenv:Fault><faultcode>soapenv:Client</faultcode>' +
+    '<faultstring>Codigo[4102].El XML no cumple el esquema.</faultstring>' +
+    '</soapenv:Fault></soapenv:Body></soapenv:Envelope>';
+  const { transporte, enviadas } = transporteFalso([fault]);
+  const cliente = new ClienteAeat({ transporte, controlDeFlujo: false });
+
+  await assert.rejects(
+    () => cliente.enviar(CABECERA, [{ alta: ALTA }]),
+    (e: unknown) => {
+      assert.ok(e instanceof ErrorSoapAeat);
+      assert.equal(e.xmlEnviado, enviadas[0]!.cuerpo);
+      assert.ok(e.xml.includes('Fault'));
+      return true;
+    },
+  );
+});
+
 test('el lote no puede estar vacío ni exceder los 1000 registros', async () => {
   const { transporte } = transporteFalso([respuestaCorrecta()]);
   const cliente = new ClienteAeat({ transporte, controlDeFlujo: false });
