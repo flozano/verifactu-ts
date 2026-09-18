@@ -134,12 +134,15 @@ export interface OpcionesCliente {
 export class ErrorEnvioAeat extends Error {
   readonly estado?: number;
   readonly cuerpo?: string;
+  /** XML que se envió, para poder conservarlo también cuando el envío falla. */
+  readonly xmlEnviado?: string;
 
-  constructor(mensaje: string, estado?: number, cuerpo?: string) {
+  constructor(mensaje: string, estado?: number, cuerpo?: string, xmlEnviado?: string) {
     super(mensaje);
     this.name = 'ErrorEnvioAeat';
     this.estado = estado;
     this.cuerpo = cuerpo;
+    this.xmlEnviado = xmlEnviado;
   }
 }
 
@@ -259,6 +262,10 @@ export class ClienteAeat {
   /**
    * Envía un lote de registros y devuelve la respuesta ya interpretada.
    *
+   * La respuesta lleva el XML recibido en `xml` y el enviado en `xmlEnviado`: quien
+   * conserve uno como evidencia suele querer el otro, y desde fuera no se puede
+   * reconstruir byte a byte porque el sobre lo arma este método.
+   *
    * Si el control de flujo está activo, espera lo que haga falta antes de enviar.
    *
    * @throws {RangeError} si el lote excede el máximo de registros o viene vacío.
@@ -307,10 +314,11 @@ export class ClienteAeat {
         `La AEAT respondió con el código HTTP ${respuesta.estado}.`,
         respuesta.estado,
         respuesta.cuerpo,
+        cuerpo,
       );
     }
 
-    const interpretada = parsearRespuestaEnvio(respuesta.cuerpo);
+    const interpretada = parsearRespuestaEnvio(respuesta.cuerpo, cuerpo);
     this.esperaSegundos = interpretada.TiempoEsperaEnvio;
     return interpretada;
   }
